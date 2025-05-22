@@ -33,24 +33,72 @@ using IPIcalculator
         2.0u"Å"
     )
 
-    # We need to set up the calculator with asyncronous communication
-    ipi_future = @spawn SocketServer(port=33415)
-    sleep(1) # we need to yield to start the server
+    @testset "With virial" begin
+        # We need to set up the calculator with asyncronous communication
+        ipi_future = @spawn SocketServer(port=33415)
+        sleep(1) # we need to yield to start the server
 
-    ipi_driver = @spawn run_driver("127.0.0.1", V, hydrogen; port=33415)
-    sleep(1) # we need to yield to connect to the server
+        ipi_driver = @spawn run_driver("127.0.0.1", V, hydrogen; port=33415)
+        sleep(1) # we need to yield to connect to the server
 
-    calc = fetch(ipi_future)
+        calc = fetch(ipi_future)
 
-    # The tests itself
-    test_energy_forces_virial(hydrogen, calc)
+        # The tests itself
+        test_energy_forces_virial(hydrogen, calc)
 
-    # Check that the calculator returns the same energy, forces and virial as the potential
-    @test AtomsCalculators.potential_energy(hydrogen, V) ≈ AtomsCalculators.potential_energy(hydrogen, calc)
-    f_v   = AtomsCalculators.forces(hydrogen, V)
-    f_ipi = AtomsCalculators.forces(hydrogen, calc)
-    @test all( isapprox.(f_v, f_ipi) )
-    @test AtomsCalculators.virial(hydrogen, V) ≈ AtomsCalculators.virial(hydrogen, calc)
+        # Check that the calculator returns the same energy, forces and virial as the potential
+        @test AtomsCalculators.potential_energy(hydrogen, V) ≈ AtomsCalculators.potential_energy(hydrogen, calc)
+        f_v   = AtomsCalculators.forces(hydrogen, V)
+        f_ipi = AtomsCalculators.forces(hydrogen, calc)
+        @test all( isapprox.(f_v, f_ipi) )
+        @test AtomsCalculators.virial(hydrogen, V) ≈ AtomsCalculators.virial(hydrogen, calc)
 
-    close(calc)
-end
+        close(calc)
+    end
+
+    @testset "Without virial" begin
+        # We need to set up the calculator with asyncronous communication
+        ipi_future = @spawn SocketServer(port=33416)
+        sleep(1) # we need to yield to start the server
+
+        ipi_driver = @spawn run_driver("127.0.0.1", V, hydrogen; port=33416, ignore_virial=true)
+        sleep(1) # we need to yield to connect to the server
+
+        calc = fetch(ipi_future)
+
+        # The tests itself
+        test_energy_forces_virial(hydrogen, calc)
+
+        # Check that the calculator returns the same energy, forces as the potential and zero virial.
+        @test AtomsCalculators.potential_energy(hydrogen, V) ≈ AtomsCalculators.potential_energy(hydrogen, calc)
+        f_v   = AtomsCalculators.forces(hydrogen, V)
+        f_ipi = AtomsCalculators.forces(hydrogen, calc)
+        @test all( isapprox.(f_v, f_ipi) )
+        @test AtomsCalculators.zero_virial(hydrogen, V) ≈ AtomsCalculators.virial(hydrogen, calc)
+
+        close(calc)
+    end
+
+    @testset "unixsocket" begin
+        # We need to set up the calculator with asyncronous communication
+        ipi_future = @spawn SocketServer("test_sock"; unixsocket=true)
+        sleep(1) # we need to yield to start the server
+
+        ipi_driver = @spawn run_driver("test_sock", V, hydrogen; unixsocket=true)
+        sleep(1) # we need to yield to connect to the server
+
+        calc = fetch(ipi_future)
+
+        # The tests itself
+        test_energy_forces_virial(hydrogen, calc)
+
+        # Check that the calculator returns the same energy, forces and virial as the potential
+        @test AtomsCalculators.potential_energy(hydrogen, V) ≈ AtomsCalculators.potential_energy(hydrogen, calc)
+        f_v   = AtomsCalculators.forces(hydrogen, V)
+        f_ipi = AtomsCalculators.forces(hydrogen, calc)
+        @test all( isapprox.(f_v, f_ipi) )
+        @test AtomsCalculators.virial(hydrogen, V) ≈ AtomsCalculators.virial(hydrogen, calc)
+
+        close(calc)
+    end
+end 

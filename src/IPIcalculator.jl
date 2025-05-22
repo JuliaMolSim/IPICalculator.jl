@@ -11,15 +11,15 @@ using Unitful
 using UnitfulAtomic
 
 export run_driver
-export SocketServer  # Renamed from IPIcalculator
+export SocketServer
 
-const hdrlen = 12
+const hdrlen = 12  # number of characters in header messages
 
-# Define context untits for better conversions
-const bohr = Unitful.ContextUnits(u"bohr", u"Å")
+# Define context units for better conversions
+const bohr    = Unitful.ContextUnits(u"bohr", u"Å")
 const hartree = Unitful.ContextUnits(u"hartree", u"eV")
 
-
+const energy_type   = typeof( zero(Float64) * hartree )
 const pos_type      = typeof( zero( SVector{3, Float64} ) * bohr ) 
 const force_el_type = typeof( zero( SVector{3, Float64} ) * (hartree/bohr) )
 const virial_type   = typeof( zero( SMatrix{3, 3, Float64} ) * hartree )
@@ -156,9 +156,12 @@ This means that, if you want to change the number of atoms or their symbols, you
 to lauch a new driver.
 
 Calculator events are logged at info level by default. If you do not want them to be logged,
-change logging status for IPI module.
+change logging status for `IPIcalculator`.
+
+You can use `ignore_virial=true` to ignore virial calculation. This is useful if your calculator does not
+support virial calculation or when virial is not needed. In this case, the calculator will send zero virial to the server.
 """
-function run_driver(address, calc, init_structure; port=31415, unixsocket=false, basename="/tmp/ipi_" )
+function run_driver(address, calc, init_structure; port=31415, unixsocket=false, basename="/tmp/ipi_", ignore_virial=false )
     if unixsocket
         comm = connect(basename*address)
     else
@@ -197,7 +200,12 @@ function run_driver(address, calc, init_structure; port=31415, unixsocket=false,
             box = pos[:cell]
             @assert length(atom_species) == length(positions) "received amount of position data does no match the atomic symbol data"
             system = FastSystem(box, pbc, positions, atom_species, masses)
-            data = AtomsCalculators.energy_forces_virial(system, calc)
+            if ignore_virial
+                tmp = AtomsCalculators.energy_forces(system, calc)
+                data = (tmp..., virial=zero(virial_type))
+            else
+                data = AtomsCalculators.energy_forces_virial(system, calc)
+            end
             has_data = true
         elseif header == "GETFORCE"
             sendforce(comm, data[:energy], data[:forces], data[:virial])
@@ -212,6 +220,7 @@ function run_driver(address, calc, init_structure; port=31415, unixsocket=false,
         end
         
     end
+    return nothing
 end
 
 
@@ -328,5 +337,10 @@ end
 AtomsCalculators.energy_unit(::SocketServer) = hartree
 AtomsCalculators.length_unit(::SocketServer) = bohr
 
+AtomsCalculators.promote_force_type(::AtomsBase.AbstractSystem, ::SocketServer) = force_el_type
+
+AtomsCalculators.zero_energy(sys, ::SocketServer) = zero(energy_type)
+AtomsCalculators.zero_forces(sys, ::SocketServer) = zeros(force_el_type, length(sys))
+AtomsCalculators.zero_virial(sys, ::SocketServer) = zeros(virial_type)
 
 end # module IPIcalculator

@@ -25,7 +25,7 @@ const force_el_type = typeof( zero( SVector{3, Float64} ) * (hartree/bohr) )
 const virial_type   = typeof( zero( SMatrix{3, 3, Float64} ) * hartree )
 
 function sendmsg(comm, message; nbytes=hdrlen)
-    @info "Sending message" message
+    @debug "Sending message" message
     if length(message) == nbytes
         final_message = message
     elseif length(message) < nbytes
@@ -46,12 +46,12 @@ function recvmsg(comm, nbytes=hdrlen)
     end
     @assert length(raw_message) == nbytes "recieved message did not have correct lenght"
     message = Char.(raw_message) |> String |> strip
-    @info "Recieved message" message
+    @debug "Recieved message" message
     return message
 end
 
 function recvinit(comm)
-    @info "Recieving INIT"
+    @debug "Recieving INIT"
     bead_index = read(comm, Int32)
     nbytes = read(comm, Int32)
     raw_data = read(comm, nbytes)
@@ -63,7 +63,7 @@ function recvinit(comm)
 end
 
 function send_init(comm)
-    @info "Sending INIT"
+    @debug "Sending INIT"
     write(comm, one(Int32))
     str = "ok"
     write(comm, sizeof(str))
@@ -79,7 +79,7 @@ function recvposdata(comm)
     raw_pos = read(comm, sizeof(Float64)*3*natoms)
     data_cell = reinterpret(pos_type, raw_cell)
     data_pos = reinterpret(pos_type, raw_pos)
-    @info "Position data recieved"
+    @debug "Position data recieved"
     return (;
         :cell => Tuple(Vector(data_cell)),
         :positions => Vector(data_pos)  # clean type a little bit
@@ -87,7 +87,7 @@ function recvposdata(comm)
 end
 
 function send_pos_data(comm, sys)
-    @info "Sending position data"
+    @debug "Sending position data"
     box_tmp = reduce(vcat, cell_vectors(sys))
     box = (Float64 ∘ ustrip).(u"bohr", box_tmp)
     write(comm, box)
@@ -98,7 +98,7 @@ function send_pos_data(comm, sys)
         SVector{3, Float64}(ustrip.(u"bohr", position(sys, i)))
     end
     write(comm, pos)
-    @info "Position data sent"
+    @debug "Position data sent"
     return true
 end
 
@@ -122,7 +122,7 @@ function recv_force(comm)
     sendmsg(comm, "GETFORCE")
     mess = recvmsg(comm)
     if mess == "FORCEREADY"
-        @info "Recieving forces"
+        @debug "Recieving forces"
         e = read(comm, Float64)
         n = read(comm, Int32)
         f_raw = read(comm, sizeof(Float64)*3*n)
@@ -211,7 +211,7 @@ function run_driver(address, calc, init_structure; port=31415, unixsocket=false,
             sendforce(comm, data[:energy], data[:forces], data[:virial])
             has_data = false
         elseif header == "EXIT"
-            @info "Exiting calculator" 
+            @info "Server send EXIT signal - closing connection" 
             close(comm)
             break
         else
@@ -251,12 +251,13 @@ mutable struct SocketServer{TS, TC}
     sock::TC
     function SocketServer(address=ip"127.0.0.1"; port=31415, unixsocket=false, basename="/tmp/ipi_" )
         server, sock = start_ipi_server(address; port=port, unixsocket=unixsocket, basename=basename)
+        @info "Connection received"
         new{typeof(server), typeof(sock)}(server, sock)
     end
 end
 
 function start_ipi_server(address; port=31415, unixsocket=false, basename="/tmp/ipi_", tries=5 )
-    @info "Starting i-PI server"
+    @info "Starting i-PI socket server"
     server = nothing
     if unixsocket
         server = listen(basename*address)
@@ -296,7 +297,7 @@ end
 
 function AtomsCalculators.energy_forces_virial(sys, ipi::SocketServer; kwargs...)
     if ! isopen(ipi.sock)
-        @info "reconnecting to i-PI driver"
+        @debug "reconnecting to i-PI driver"
         _, sock = get_connection(ipi.server)
         ipi.sock = sock
     end

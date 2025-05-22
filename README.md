@@ -2,7 +2,7 @@
 
 Implements a server-client based calculator defined by [i-PI](https://github.com/i-pi/i-pi) .
 
-Julia side server works as a AtomsCalculators calculator and
+Julia side server works as a [AtomsCalculators](https://github.com/JuliaMolSim/AtomsCalculators.jl) calculator and
 allows using any program that implements [i-PI](https://github.com/i-pi/i-pi)
 driver (client) or [Molssi Driver interface](https://molssi.org/software/mdi-2/) (MDI) engine
 as an engine for calculations in Julia.

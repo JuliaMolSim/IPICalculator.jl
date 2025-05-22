@@ -1,0 +1,4 @@
+name = "IPIcalculator"
+uuid = "78514ca9-c0f0-4226-8c48-df09c4255a51"
+authors = ["Teemu Järvinen and JuliaMolSim contributors"]
+version = "0.1.0"

@@ -3,10 +3,11 @@ using Test
 using AtomsBase
 using AtomsCalculators
 using AtomsCalculators.Testing
-using AtomsCalculatorsUtilities.IPI
 using AtomsCalculatorsUtilities.PairPotentials
 using Unitful
 using Base.Threads
+
+using IPIcalculator
 
 @testset "IPI Calculator Tests" begin
 
@@ -33,7 +34,7 @@ using Base.Threads
     )
 
     # We need to set up the calculator with asyncronous communication
-    ipi_future = @spawn IPIserver(port=33415)
+    ipi_future = @spawn SocketServer(port=33415)
     sleep(1) # we need to yield to start the server
 
     ipi_driver = @spawn run_driver("127.0.0.1", V, hydrogen; port=33415)

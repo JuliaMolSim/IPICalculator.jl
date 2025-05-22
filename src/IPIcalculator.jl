@@ -1,7 +1,7 @@
 module IPIcalculator
 
 # This is AtomsCalculators implementation for i-PI protocol.
-# For reference see https://github.com/i-pi/i-pi/blob/master/drivers/py/driver.py
+# For reference see https://github.com/i-PI/i-PI/blob/master/drivers/py/driver.py
 
 using AtomsBase
 using AtomsCalculators
@@ -11,7 +11,7 @@ using Unitful
 using UnitfulAtomic
 
 export run_driver
-export IPIserver  # Renamed from IPIcalculator
+export SocketServer  # Renamed from IPIcalculator
 
 const hdrlen = 12
 
@@ -147,11 +147,11 @@ end
 """
     run_driver(address, calculator, init_structure; port=31415, unixsocket=false, basename="/tmp/ipi_" )
 
-Connect I-PI driver to server at given `address`. Use kword `port` (default 31415) to
+Connect i-PI driver to server at given `address`. Use kword `port` (default 31415) to
 specify port. If kword `unixsocket` is true, `basename*address` is understood to be the name of the socket
 and `port` option is ignored. 
 
-You need to give initial structure as I-PI protocol does not transfer atom symbols.
+You need to give initial structure as i-PI protocol does not transfer atom symbols.
 This means that, if you want to change the number of atoms or their symbols, you need
 to lauch a new driver.
 
@@ -219,7 +219,7 @@ end
 ## Server specific part
 
 """
-    IPIserver(address=ip"127.0.0.1"; port=31415, unixsocket=false, basename="/tmp/ipi_" )
+    SocketServer(address=ip"127.0.0.1"; port=31415, unixsocket=false, basename="/tmp/ipi_" )
 
 Creates i-PI https://ipi-code.org/ server that works as an AtomsCalculators compatible calculator
 once i-PI driver has been connected.
@@ -237,10 +237,10 @@ At the end of calculation you should call `close` on the calculator to send exit
 - `port=31415`              -  network port the server is using
 - `unixsocket=false`        -  use unixsocket for the connection
 """
-mutable struct IPIserver{TS, TC}
+mutable struct SocketServer{TS, TC}
     server::TS
     sock::TC
-    function IPIserver(address=ip"127.0.0.1"; port=31415, unixsocket=false, basename="/tmp/ipi_" )
+    function SocketServer(address=ip"127.0.0.1"; port=31415, unixsocket=false, basename="/tmp/ipi_" )
         server, sock = start_ipi_server(address; port=port, unixsocket=unixsocket, basename=basename)
         new{typeof(server), typeof(sock)}(server, sock)
     end
@@ -278,14 +278,14 @@ function get_connection(server; tries=5)
     error("Could not form a connection to a working i-PI driver")
 end
 
-function Base.close(ipi::IPIserver)
+function Base.close(ipi::SocketServer)
     if isopen(ipi.sock)
         sendmsg(ipi.sock, "EXIT")
     end
 end
 
 
-function AtomsCalculators.energy_forces_virial(sys, ipi::IPIserver; kwargs...)
+function AtomsCalculators.energy_forces_virial(sys, ipi::SocketServer; kwargs...)
     if ! isopen(ipi.sock)
         @info "reconnecting to i-PI driver"
         _, sock = get_connection(ipi.server)
@@ -303,30 +303,30 @@ function AtomsCalculators.energy_forces_virial(sys, ipi::IPIserver; kwargs...)
 end
 
 
-AtomsCalculators.@generate_interface function AtomsCalculators.potential_energy(sys, ipi::IPIserver; kwargs...)
+AtomsCalculators.@generate_interface function AtomsCalculators.potential_energy(sys, ipi::SocketServer; kwargs...)
     tmp = AtomsCalculators.energy_forces_virial(sys, ipi)
     return tmp.energy
 end
 
-AtomsCalculators.@generate_interface function AtomsCalculators.forces(sys, ipi::IPIserver; kwargs...)
+AtomsCalculators.@generate_interface function AtomsCalculators.forces(sys, ipi::SocketServer; kwargs...)
     tmp = AtomsCalculators.energy_forces_virial(sys, ipi)
     return tmp.forces
 end
 
-AtomsCalculators.@generate_interface function AtomsCalculators.virial(sys, ipi::IPIserver; kwargs...)
+AtomsCalculators.@generate_interface function AtomsCalculators.virial(sys, ipi::SocketServer; kwargs...)
     tmp = AtomsCalculators.energy_forces_virial(sys, ipi)
     return tmp.virial
 end
 
-function AtomsCalculators.energy_forces(sys, ipi::IPIserver; kwargs...)
+function AtomsCalculators.energy_forces(sys, ipi::SocketServer; kwargs...)
     tmp = AtomsCalculators.energy_forces_virial(sys, ipi)
     return tmp
 end
 
 
 
-AtomsCalculators.energy_unit(::IPIserver) = hartree
-AtomsCalculators.length_unit(::IPIserver) = bohr
+AtomsCalculators.energy_unit(::SocketServer) = hartree
+AtomsCalculators.length_unit(::SocketServer) = bohr
 
 
 end # module IPIcalculator

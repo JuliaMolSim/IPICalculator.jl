@@ -38,7 +38,7 @@ using IPIcalculator
         ipi_future = @spawn SocketServer(port=33415)
         sleep(1) # we need to yield to start the server
 
-        ipi_driver = @spawn run_driver("127.0.0.1", V, hydrogen; port=33415)
+        ipi_driver = @spawn run_driver("127.0.0.1", hydrogen, V; port=33415)
         sleep(1) # we need to yield to connect to the server
 
         calc = fetch(ipi_future)
@@ -61,7 +61,7 @@ using IPIcalculator
         ipi_future = @spawn SocketServer(port=33416)
         sleep(1) # we need to yield to start the server
 
-        ipi_driver = @spawn run_driver("127.0.0.1", V, hydrogen; port=33416, ignore_virial=true)
+        ipi_driver = @spawn run_driver("127.0.0.1", hydrogen, V; port=33416, ignore_virial=true)
         sleep(1) # we need to yield to connect to the server
 
         calc = fetch(ipi_future)
@@ -84,7 +84,7 @@ using IPIcalculator
         ipi_future = @spawn SocketServer("test_sock"; unixsocket=true)
         sleep(1) # we need to yield to start the server
 
-        ipi_driver = @spawn run_driver("test_sock", V, hydrogen; unixsocket=true)
+        ipi_driver = @spawn run_driver("test_sock", hydrogen, V; unixsocket=true)
         sleep(1) # we need to yield to connect to the server
 
         calc = fetch(ipi_future)

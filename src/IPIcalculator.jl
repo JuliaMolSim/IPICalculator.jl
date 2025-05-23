@@ -145,7 +145,7 @@ function recv_force(comm)
 end
 
 """
-    run_driver(address, calculator, init_structure; port=31415, unixsocket=false, basename="/tmp/ipi_" )
+    run_driver(address, init_structure, calculator; port=31415, unixsocket=false, basename="/tmp/ipi_" )
 
 Connect i-PI driver to server at given `address`. Use kword `port` (default 31415) to
 specify port. If kword `unixsocket` is true, `basename*address` is understood to be the name of the socket
@@ -161,7 +161,7 @@ change logging status for `IPIcalculator`.
 You can use `ignore_virial=true` to ignore virial calculation. This is useful if your calculator does not
 support virial calculation or when virial is not needed. In this case, the calculator will send zero virial to the server.
 """
-function run_driver(address, calc, init_structure; port=31415, unixsocket=false, basename="/tmp/ipi_", ignore_virial=false )
+function run_driver(address, init_structure, calc; port=31415, unixsocket=false, basename="/tmp/ipi_", ignore_virial=false )
     if unixsocket
         comm = connect(basename*address)
     else

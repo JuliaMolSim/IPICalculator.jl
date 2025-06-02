@@ -172,8 +172,8 @@ run_driver(init_structure, calc)
 # Custom port and address
 run_driver(init_structure, calc; address="some.ip.address", port=12345)
 
-# Custom Unix socket
-run_driver(init_structure, calc; unixsocket="my_ipi_socket")
+# Custom Unix socket at /tmp/ipi_mysocket
+run_driver(init_structure, calc; unixsocket="my_ipi_socket", basename="/tmp/ipi_")
 
 # Calculation without virial (localhost and port 31415)
 run_driver(init_structure, calc; ignore_virial=true)
@@ -281,7 +281,7 @@ ipi_calculator = SocketServer()
 ipi_calculator = SocketServer( port=12345 )
 
 # Custom Unix socket
-ipi_calculator = SocketServer(unixsocket="my_ipi_socket")
+ipi_calculator = SocketServer( unixsocket="my_ipi_socket" )
 ```
 """
 mutable struct SocketServer{TS, TC}

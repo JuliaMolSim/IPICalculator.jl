@@ -19,8 +19,11 @@ const hdrlen = 12  # number of characters in header messages
 const bohr    = Unitful.ContextUnits(u"bohr", u"Å")
 const hartree = Unitful.ContextUnits(u"hartree", u"eV")
 
-const energy_type   = typeof( zero(Float64) * hartree )
+# Return position type for i-PI protocol
 const pos_type      = typeof( zero( SVector{3, Float64} ) * bohr ) 
+
+# Calculator return types
+const energy_type   = typeof( zero(Float64) * hartree )
 const force_el_type = typeof( zero( SVector{3, Float64} ) * (hartree/bohr) )
 const virial_type   = typeof( zero( SMatrix{3, 3, Float64} ) * hartree )
 

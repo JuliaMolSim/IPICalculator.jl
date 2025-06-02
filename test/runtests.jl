@@ -38,7 +38,7 @@ using IPIcalculator
         ipi_future = @spawn SocketServer(port=33415)
         sleep(1) # we need to yield to start the server
 
-        ipi_driver = @spawn run_driver("127.0.0.1", hydrogen, V; port=33415)
+        ipi_driver = @spawn run_driver(hydrogen, V; address="127.0.0.1", port=33415)
         sleep(1) # we need to yield to connect to the server
 
         calc = fetch(ipi_future)
@@ -61,7 +61,7 @@ using IPIcalculator
         ipi_future = @spawn SocketServer(port=33416)
         sleep(1) # we need to yield to start the server
 
-        ipi_driver = @spawn run_driver("127.0.0.1", hydrogen, V; port=33416, ignore_virial=true)
+        ipi_driver = @spawn run_driver(hydrogen, V; address="127.0.0.1", port=33416, ignore_virial=true)
         sleep(1) # we need to yield to connect to the server
 
         calc = fetch(ipi_future)
@@ -81,10 +81,10 @@ using IPIcalculator
 
     @testset "unixsocket" begin
         # We need to set up the calculator with asyncronous communication
-        ipi_future = @spawn SocketServer("test_sock"; unixsocket=true)
+        ipi_future = @spawn SocketServer(unixsocket="test_sock")
         sleep(1) # we need to yield to start the server
 
-        ipi_driver = @spawn run_driver("test_sock", hydrogen, V; unixsocket=true)
+        ipi_driver = @spawn run_driver(hydrogen, V; unixsocket="test_sock")
         sleep(1) # we need to yield to connect to the server
 
         calc = fetch(ipi_future)

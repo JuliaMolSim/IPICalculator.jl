@@ -160,12 +160,38 @@ change logging status for `IPIcalculator`.
 
 You can use `ignore_virial=true` to ignore virial calculation. This is useful if your calculator does not
 support virial calculation or when virial is not needed. In this case, the calculator will send zero virial to the server.
+
+# Example
+```julia
+using IPIcalculator
+using AtomsBase, AtomsCalculators
+
+# Default for localhost and port 31415
+run_driver(init_structure, calc)
+
+# Custom port and address
+run_driver(init_structure, calc; address="some.ip.address", port=12345)
+
+# Custom Unix socket
+run_driver(init_structure, calc; unixsocket="my_ipi_socket")
+
+# Calculation without virial (localhost and port 31415)
+run_driver(init_structure, calc; ignore_virial=true)
+```
 """
-function run_driver(address, init_structure, calc; port=31415, unixsocket=false, basename="/tmp/ipi_", ignore_virial=false )
-    if unixsocket
-        comm = connect(basename*address)
-    else
+function run_driver(
+        init_structure,
+        calc;
+        address=ip"127.0.0.1",
+        port=31415,
+        unixsocket=nothing,
+        basename="/tmp/ipi_",
+        ignore_virial=false
+    )
+    if isnothing( unixsocket )
         comm = connect(address, port)
+    else 
+        comm = connect(basename * unixsocket)
     end
     has_init = true  # we have init structure as an input
     has_data = false
@@ -228,7 +254,7 @@ end
 ## Server specific part
 
 """
-    SocketServer(address=ip"127.0.0.1"; port=31415, unixsocket=false, basename="/tmp/ipi_" )
+    SocketServer( port=31415, unixsocket=nothing, basename="/tmp/ipi_" )
 
 Creates i-PI https://ipi-code.org/ server that works as an AtomsCalculators compatible calculator
 once i-PI driver has been connected.
@@ -238,31 +264,43 @@ you need to change the logging level of IPI module.
 
 At the end of calculation you should call `close` on the calculator to send exit signal to the driver.
 
-# Args
-- `address=ip"127.0.0.1"`   -  server address, if `unixsocket=true` is considered as unixsocket address
-
 # Kwargs
-- `basename="/tmp/ipi_"`    -  prefixed to address if `unixsocket=true`
+- `basename="/tmp/ipi_"`    -  prefixed to unixsocket if given, otherwise ignored. This is used to create a Unix socket for communication.
 - `port=31415`              -  network port the server is using
-- `unixsocket=false`        -  use unixsocket for the connection
+- `unixsocket=nothing`      -  if given will use `basename*unixsocket` as Unix socket for commucation.
+
+# Example
+
+```julia
+using IPIcalculator
+
+# Default port 31415
+ipi_calculator = SocketServer()
+
+# Custom port
+ipi_calculator = SocketServer( port=12345 )
+
+# Custom Unix socket
+ipi_calculator = SocketServer(unixsocket="my_ipi_socket")
+```
 """
 mutable struct SocketServer{TS, TC}
     server::TS
     sock::TC
-    function SocketServer(address=ip"127.0.0.1"; port=31415, unixsocket=false, basename="/tmp/ipi_" )
-        server, sock = start_ipi_server(address; port=port, unixsocket=unixsocket, basename=basename)
+    function SocketServer(; port=31415, unixsocket=nothing, basename="/tmp/ipi_" )
+        server, sock = start_ipi_server( port=port, unixsocket=unixsocket, basename=basename)
         @info "Connection received"
         new{typeof(server), typeof(sock)}(server, sock)
     end
 end
 
-function start_ipi_server(address; port=31415, unixsocket=false, basename="/tmp/ipi_", tries=5 )
+function start_ipi_server(; port=31415, unixsocket=nothing, basename="/tmp/ipi_", tries=5 )
     @info "Starting i-PI socket server"
     server = nothing
-    if unixsocket
-        server = listen(basename*address)
+    if isnothing(unixsocket)
+        server = listen(port)
     else
-        server = listen(address, port)
+        server = listen( basename * unixsocket )
     end
     get_connection(server; tries=tries) # returns server, socket
 end

@@ -18,11 +18,11 @@ Julia server can be started with
 ```julia
 using IPIcalculator
 
-# network mode on localhost 
-calc = SocketServer("127.0.0.1"; port=33415)
+# network mode using port 33415
+calc = SocketServer(port=33415)
 
 # unixsocket mode with socket at /tmp/ipi_mysocket
-calc = SocketServer("mysocket"; unixsocket=true,  basename="/tmp/ipi_")
+calc = SocketServer( unixsocket="mysocket",  basename="/tmp/ipi_")
 
 # perform calculations
 # AtomsCalculators.energy_force_virial(sys, calc)
@@ -45,10 +45,13 @@ sys = # generate a system that sets up atom types for the calculator
 calc = # generate a AtomsCalculators calculator
 
 # network mode on localhost 
-run_driver("127.0.0.1", sys, calc; port=33415)
+run_driver(sys, calc; port=33415)
+
+# network mode on remote host
+run_driver(sys, calc; address="some.ip.address", port=12345)
 
 # unixsocket mode with socket at /tmp/ipi_mysocket
-run_driver("mysocket", sys, calc; unixsocket=true,  basename="/tmp/ipi_")
+run_driver(sys, calc; unixsocket="mysocket",  basename="/tmp/ipi_")
 ```
 
 Note, that you need to give driver [AtomsBase](https://github.com/JuliaMolSim/AtomsBase.jl) structure that defines atom types.
@@ -59,7 +62,8 @@ be turned off, to allow calculators that don't support virial to work.
 
 ```julia
 # Don't calculate virial and return zeros for virial instead
-run_driver("127.0.0.1", sys, calc; port=33415, ignore_virial=true)
+# using localhost and port 33415
+run_driver(sys, calc; ignore_virial=true)
 ```
 
 ## Enable debug messages
@@ -78,7 +82,7 @@ Fist start ASE [SocketIOCalculator](https://wiki.fysik.dtu.dk/ase/ase/calculator
 ```python
 from ase.calculators.socketio import SocketIOCalculator
 
-# Using local host and default port 33415
+# Using localhost and default port 33415
 # Adjust as you see fit
 calc = SocketIOCalculator()
 ```
@@ -86,7 +90,7 @@ calc = SocketIOCalculator()
 Connect Julia driver to the socket
 
 ```julia
-run_driver("127.0.0.1", sys, calc; port=33415, ignore_virial=false)
+run_driver(sys, calc)
 ```
 
 Do calculations in Python.
@@ -99,4 +103,4 @@ Other options to call ASE from Julia include:
 - [ASEconvert.jl](https://github.com/mfherbst/ASEconvert.jl) - AtomsCalculators combatible
 - [Molly](https://github.com/JuliaMolSim/Molly.jl) has also its own way of calling [ASE calculators](https://juliamolsim.github.io/Molly.jl/stable/api/#Molly.ASECalculator)
 
-The main difference is that using sockets Python and Julia are different processes, while ACEconvert and Molly start Python from Julia so that Python is in same prosess that Julia, which can cause problems sometimes.
+The main difference is that using sockets Python and Julia are different processes, while ACEconvert and Molly start Python from Julia, so that Python is in the same prosess than Julia, which can cause problems sometimes.

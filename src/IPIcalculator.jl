@@ -145,18 +145,17 @@ function recv_force(comm)
 end
 
 """
-    run_driver(address, init_structure, calculator; port=31415, unixsocket=false, basename="/tmp/ipi_" )
+    run_driver(init_structure, calculator; address=ip"127.0.0.1", port=31415, unixsocket=nothing, basename="/tmp/ipi_" )
 
-Connect i-PI driver to server at given `address`. Use kword `port` (default 31415) to
-specify port. If kword `unixsocket` is true, `basename*address` is understood to be the name of the socket
-and `port` option is ignored. 
+Connect i-PI driver to server at given `address` using `port` (default localhost and 31415).
+If `unixsocket` is something, it will be used to connect to the server using Unix socket
+at `basename*unixsocket`. If `unixsocket` is not given, the server will use network connection.
 
 You need to give initial structure as i-PI protocol does not transfer atom symbols.
 This means that, if you want to change the number of atoms or their symbols, you need
 to lauch a new driver.
 
-Calculator events are logged at info level by default. If you do not want them to be logged,
-change logging status for `IPIcalculator`.
+Calculator has major events logged at info level and all communication logged at debug level. 
 
 You can use `ignore_virial=true` to ignore virial calculation. This is useful if your calculator does not
 support virial calculation or when virial is not needed. In this case, the calculator will send zero virial to the server.
@@ -172,8 +171,8 @@ run_driver(init_structure, calc)
 # Custom port and address
 run_driver(init_structure, calc; address="some.ip.address", port=12345)
 
-# Custom Unix socket at /tmp/ipi_mysocket
-run_driver(init_structure, calc; unixsocket="my_ipi_socket", basename="/tmp/ipi_")
+# Custom Unix socket at /tmp/ipi_my_socket
+run_driver(init_structure, calc; unixsocket="my_socket", basename="/tmp/ipi_")
 
 # Calculation without virial (localhost and port 31415)
 run_driver(init_structure, calc; ignore_virial=true)
@@ -259,8 +258,7 @@ end
 Creates i-PI https://ipi-code.org/ server that works as an AtomsCalculators compatible calculator
 once i-PI driver has been connected.
 
-By default the calculator will log protocol calls to the client. If you want to suppress these,
-you need to change the logging level of IPI module.
+Calculator has major events logged at info level and all communication logged at debug level.
 
 At the end of calculation you should call `close` on the calculator to send exit signal to the driver.
 
@@ -280,8 +278,11 @@ ipi_calculator = SocketServer()
 # Custom port
 ipi_calculator = SocketServer( port=12345 )
 
-# Custom Unix socket
-ipi_calculator = SocketServer( unixsocket="my_ipi_socket" )
+# Custom Unix socket at /tmp/ipi_mysocket
+ipi_calculator = SocketServer( unixsocket="mysocket", basename="/tmp/ipi_" )
+
+# At the end of calculation you should close the calculator
+close(ipi_calculator)
 ```
 """
 mutable struct SocketServer{TS, TC}

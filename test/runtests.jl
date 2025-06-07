@@ -9,6 +9,10 @@ using Base.Threads
 
 using IPIcalculator
 
+
+include("Aqua.jl")
+
+
 @testset "IPI Calculator Tests" begin
 
     # Build a test system
@@ -101,4 +105,5 @@ using IPIcalculator
 
         close(calc)
     end
-end 
+
+end

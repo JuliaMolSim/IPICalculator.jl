@@ -299,11 +299,12 @@ mutable struct SocketServer{TS, TC}
 end
 
 function start_ipi_server(; port=31415, unixsocket=nothing, basename="/tmp/ipi_", tries=5 )
-    @info "Starting i-PI socket server"
     server = nothing
     if isnothing(unixsocket)
+        @info "Starting i-PI socket server at port $port"
         server = listen(port)
     else
+        @info "Starting i-PI socket server using Unix socket at $(basename * unixsocket)"
         server = listen( basename * unixsocket )
     end
     get_connection(server; tries=tries) # returns server, socket

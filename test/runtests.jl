@@ -7,7 +7,7 @@ using AtomsCalculatorsUtilities.PairPotentials
 using Unitful
 using Base.Threads
 
-using IPIcalculator
+using IPICalculator
 
 
 include("Aqua.jl")

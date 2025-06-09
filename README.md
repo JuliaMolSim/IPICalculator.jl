@@ -1,4 +1,4 @@
-# IPIcalculator.jl
+# IPICalculator.jl
 
 Implements a server-client based calculator defined by [i-PI](https://github.com/i-pi/i-pi) .
 
@@ -16,7 +16,7 @@ IPIcalculator.jl implements only i-PI protocol not full MDI standard.
 Julia server can be started with
 
 ```julia
-using IPIcalculator
+using IPICalculator
 
 # network mode using port 33415
 calc = SocketServer(port=33415)
@@ -39,7 +39,7 @@ close(calc)
 Julia driver can be started with
 
 ```julia
-using IPIcalculator
+using IPICalculator
 
 sys = # generate a system that sets up atom types for the calculator
 calc = # generate a AtomsCalculators calculator
@@ -72,7 +72,7 @@ You can enable communication logs by allowing debug level logs.
 This can be done by calling (in Julia)
 
 ```julia
-ENV["JULIA_DEBUG"] = IPIcalculator 
+ENV["JULIA_DEBUG"] = IPICalculator 
 ```
 
 ## Using Julia based calculator from ASE

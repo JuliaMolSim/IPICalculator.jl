@@ -1,4 +1,4 @@
-module IPIcalculator
+module IPICalculator
 
 # This is AtomsCalculators implementation for i-PI protocol.
 # For reference see https://github.com/i-PI/i-PI/blob/master/drivers/py/driver.py
